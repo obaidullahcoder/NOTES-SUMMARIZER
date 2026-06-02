@@ -6,11 +6,14 @@ from groq import Groq
 # Load environment variables from .env file
 load_dotenv()
 
-# Initialize the Groq client
-try:
-    client = Groq()
-except Exception as e:
-    st.error("Failed to initialize Groq client. Please check your API key.")
+# Initialize the Groq client safely
+groq_api_key = os.getenv("GROQ_API_KEY")
+
+if not groq_api_key:
+    st.error("Groq API Key not found. Please set GROQ_API_KEY in your environment or Streamlit Secrets.")
+    st.stop()  # Instantly halts execution cleanly so it doesn't try to use a missing 'client'
+else:
+    client = Groq(api_key=groq_api_key)
 
 # Page Configuration
 st.set_page_config(
