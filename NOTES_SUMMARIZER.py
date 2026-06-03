@@ -22,13 +22,16 @@ else:
 # Page Configuration
 st.set_page_config(page_title="🤖 Advanced Note Summarizer", layout="wide")
 
-# 🎨 CUSTOM CSS: Forces the entire background to Orange and adjusts text colors
+# 🎨 CUSTOM CSS: Forces orange background, fixes text colors, and hides Streamlit/GitHub menus
 st.markdown(
     """
     <style>
+    /* 1. Make the whole app background orange */
     .stApp {
         background-color: #FF9224;
     }
+    
+    /* 2. Force text colors to black for readability */
     h1, h2, h3, p, span, label {
         color: #000000 !important;
     }
@@ -38,6 +41,20 @@ st.markdown(
     }
     div[data-testid="stMarkdownContainer"] p {
         color: #000000 !important;
+    }
+    
+    /* 3. HIDE STREAMLIT HEADER, DEPLOY BUTTON, AND FOOTER */
+    header {
+        visibility: hidden;
+    }
+    #MainMenu {
+        visibility: hidden;
+    }
+    footer {
+        visibility: hidden;
+    }
+    div[data-testid="stDecoration"] {
+        display: none;
     }
     </style>
     """,
