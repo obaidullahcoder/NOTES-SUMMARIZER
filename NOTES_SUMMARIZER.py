@@ -1,7 +1,11 @@
 ﻿import os
 import streamlit as st
-from dotenv import load_dotenv
 from groq import Groq
+from dotenv import load_dotenv
+from pypdf import PdfReader
+import easyocr
+from PIL import Image
+import numpy as np
 
 # Load environment variables from .env file
 load_dotenv()
@@ -11,74 +15,83 @@ groq_api_key = os.getenv("GROQ_API_KEY")
 
 if not groq_api_key:
     st.error("Groq API Key not found. Please set GROQ_API_KEY in your environment or Streamlit Secrets.")
-    st.stop()  # Instantly halts execution cleanly so it doesn't try to use a missing 'client'
+    st.stop() 
 else:
     client = Groq(api_key=groq_api_key)
 
 # Page Configuration
-st.set_page_config(
-    page_title="⚡ Groq Note Summarizer",
-    page_icon="📝",
-    layout="wide"
-)
+st.set_page_config(page_title="🤖 Advanced Note Summarizer", layout="wide")
 
-# App Header
-st.title("⚡ Groq Note Summarizer")
-st.caption("Paste your messy notes and get a clean, AI-generated summary instantly powered by Llama 3.1 on Groq.")
-st.markdown("---")
+st.title("Advanced AI Notes Summarizer")
+st.markdown("Upload a PDF document, an image/screenshot, or paste text directly to generate an intelligent summary.")
 
-# Create two columns for the side-by-side workspace
+# Create columns for clean layout
 col1, col2 = st.columns(2)
 
 with col1:
-    st.subheader("Your Notes")
-    # Text area for user input
-    note_input = st.text_area(
-        label="Enter or paste your notes here:",
-        placeholder="Type or paste your lecture notes, meeting transcripts, or brainstorms here...",
-        height=400,
-        label_visibility="collapsed"
-    )
-    
-    # Trigger button
-    submit_button = st.button("Summarize Note", type="primary", use_container_width=True)
+    st.subheader("Your Input")
+    # 1. Create the File Uploader widget
+    uploaded_file = st.file_uploader("Upload your notes (PDF, PNG, JPG, JPEG)", type=["pdf", "png", "jpg", "jpeg"])
+
+    extracted_text = ""
+
+    # 2. Process the file if a user uploads one
+    if uploaded_file is not None:
+        # --- IF THE FILE IS A PDF ---
+        if uploaded_file.type == "application/pdf":
+            with st.spinner("Extracting text from PDF..."):
+                reader = PdfReader(uploaded_file)
+                for page in reader.pages:
+                    text = page.extract_text()
+                    if text:
+                        extracted_text += text + "\n"
+            st.success("PDF Text Extracted Successfully!")
+
+        # --- IF THE FILE IS AN IMAGE (PNG/JPG) ---
+        elif uploaded_file.type in ["image/png", "image/jpeg"]:
+            with st.spinner("Reading text from image (OCR)..."):
+                image = Image.open(uploaded_file)
+                image_np = np.array(image)
+                
+                # Initialize the OCR reader (english)
+                reader = easyocr.Reader(['en'])
+                results = reader.readtext(image_np)
+                
+                # Combine found text chunks
+                extracted_text = " ".join([res[1] for res in results])
+            st.success("Image Text Extracted Successfully!")
+
+    # 3. Text area displays extracted text OR allows manual typing
+    if extracted_text:
+        note_input = st.text_area("Review/Edit your extracted notes below:", value=extracted_text, height=300)
+    else:
+        note_input = st.text_area("Or type/paste your notes manually here:", height=300)
+
+    submit_button = st.button("Summarize Note", type="primary")
 
 with col2:
     st.subheader("AI Summary")
     
-    # Logic when the user clicks the button
+    # 4. Running the Groq LLM completion block when button clicked
     if submit_button:
         if not note_input.strip():
-            st.warning("Please enter some text to summarize!")
+            st.warning("Please upload a file or enter some text first.")
         else:
-            # Spinner placeholder while waiting for Groq
-            with st.spinner("Analyzing your notes and generating summary..."):
+            with st.spinner("Llama 3.1 is analyzing your notes..."):
                 try:
-                    # Request to Groq API
                     chat_completion = client.chat.completions.create(
                         messages=[
                             {
-                                "role": "system",
-                                "content": "You are an expert executive assistant. Summarize the user's notes cleanly. Use concise bullet points for key takeaways and a 1-2 sentence overview at the top."
+                                "role": "system", 
+                                "content": "You are an expert academic assistant. Summarize the user's notes cleanly using core bullet points, key concepts, and actionable takeaways."
                             },
-                            {
-                                "role": "user",
-                                "content": f"Please summarize these notes:\n\n{note_input}"
-                            }
+                            {"role": "user", "content": f"Please summarize these notes:\n\n{note_input}"}
                         ],
-                        model="llama-3.1-8b-instant", # Updated to the active, supported model
-                        temperature=0.3,              # Low temperature keeps summaries focused and factual
+                        model="llama-3.1-8b-instant",
+                        temperature=0.3,
                     )
-                    
-                    # Extract the text answer
                     summary = chat_completion.choices[0].message.content
-                    
-                    # Render the output neatly inside a markdown box
-                    st.success("Generation complete!")
+                    st.success("Generation Complete!")
                     st.markdown(summary)
-                    
                 except Exception as e:
                     st.error(f"An error occurred while connecting to Groq: {e}")
-    else:
-        # Placeholder text before the user hits submit
-        st.info("Your summary will appear here once you hit 'Summarize Note'.")
