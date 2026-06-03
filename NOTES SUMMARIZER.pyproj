@@ -4,13 +4,15 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>12d789ec-f536-4234-953f-6ddbffbaa7c8</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>NOTES_SUMMARIZER.py</StartupFile>
+    <StartupFile>
+    </StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <Name>NOTES SUMMARIZER</Name>
     <RootNamespace>NOTES SUMMARIZER</RootNamespace>
+    <IsWindowsApplication>False</IsWindowsApplication>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>

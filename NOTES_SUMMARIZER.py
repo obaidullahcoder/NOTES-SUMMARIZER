@@ -22,15 +22,54 @@ else:
 # Page Configuration
 st.set_page_config(page_title="🤖 Advanced Note Summarizer", layout="wide")
 
-st.title("Advanced AI Notes Summarizer")
-st.markdown("Upload a PDF document, an image/screenshot, or paste text directly to generate an intelligent summary.")
+# 🎨 CUSTOM CSS: Forces the entire background to Orange and adjusts text colors
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background-color: #FF9224;
+    }
+    h1, h2, h3, p, span, label {
+        color: #000000 !important;
+    }
+    .stTextArea textarea {
+        background-color: #F0F2F6 !important;
+        color: #000000 !important;
+    }
+    div[data-testid="stMarkdownContainer"] p {
+        color: #000000 !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
-# Create columns for clean layout
+# --- TOP HEADER SECTION (Title on Left, Profile Pic & Tagline on Right) ---
+header_col1, header_col2 = st.columns([4, 1])
+
+with header_col1:
+    st.title("Advanced AI Notes Summarizer")
+    st.markdown("**Upload a PDF document, an image/screenshot, or paste text directly to generate an intelligent summary.**")
+
+with header_col2:
+    # Try to load your profile photo if it exists in the folder
+    if os.path.exists("profile.png"):
+        img = Image.open("profile.png")
+        st.image(img, width=100)
+    else:
+        st.caption("(Place 'profile.png' here)")
+        
+    st.markdown("<p style='font-size: 11px; font-weight: bold; margin-top: -5px;'>made by obaid for nalaik students</p>", unsafe_allow_html=True)
+
+st.markdown("---")
+
+# --- MAIN LAYOUT COLUMNS ---
 col1, col2 = st.columns(2)
 
 with col1:
     st.subheader("Your Input")
-    # 1. Create the File Uploader widget
+    
+    # 1. File Uploader widget
     uploaded_file = st.file_uploader("Upload your notes (PDF, PNG, JPG, JPEG)", type=["pdf", "png", "jpg", "jpeg"])
 
     extracted_text = ""
@@ -77,16 +116,17 @@ with col2:
         if not note_input.strip():
             st.warning("Please upload a file or enter some text first.")
         else:
-            with st.spinner("Llama 3.1 is analyzing your notes..."):
+            with st.spinner("Analyzing your notes..."):
                 try:
                     chat_completion = client.chat.completions.create(
                         messages=[
                             {
                                 "role": "system", 
-                                "content": "You are an expert academic assistant. Summarize the user's notes cleanly using core bullet points, key concepts, and actionable takeaways."
+                                "content": "You are an expert academic assistant. Summarize the user's notes cleanly using simple core bullet points, key concepts, and easy formulas if applicable."
                             },
                             {"role": "user", "content": f"Please summarize these notes:\n\n{note_input}"}
                         ],
+                        # Using the stable, active free-tier model
                         model="llama-3.1-8b-instant",
                         temperature=0.3,
                     )
